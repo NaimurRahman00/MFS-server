@@ -56,9 +56,16 @@ async function connectAndStartServer() {
             res.send(result);
         });
 
+        // users
+        app.post('/users', async (req, res) => {
+            const usersData = req.body;
+            const result = await usersCollection.insertOne(usersData);
+            res.send(result)
+        })
+
         // Initialize routes
         app.use('/api/auth', authRoutes);
-        app.use('/api/users', userRoutes);
+        app.use('/users', userRoutes);
         app.use('/api/transactions', transactionRoutes);
 
         // Start server

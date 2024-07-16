@@ -1,4 +1,5 @@
 const express = require('express');
+const { getDb } = require('../utils/db'); // Import your database connection
 const jwt = require('jsonwebtoken');
 
 const router = express.Router();
@@ -17,34 +18,9 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-
-
-// User Registration
-router.post('/register', async (req, res) => {
-  const db = req.app.locals.db;
-  const usersCollection = db.collection('users');
-  const { name, pin, mobileNumber, email } = req.body;
-
-  try {
-    // Check if user already exists
-    const existingUser = await usersCollection.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    // Insert new user
-    const newUser = { name, pin, mobileNumber, email, status: 'Pending' };
-    await usersCollection.insertOne(newUser);
-
-    res.status(201).json({ message: 'User registered successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Error registering user' });
-  }
-});
-
 // Get user profile
 router.get('/profile', verifyToken, async (req, res) => {
-  const db = req.app.locals.db;
+  const db = getDb();
   const usersCollection = db.collection('users');
   const { username } = req.user;
 
@@ -57,6 +33,34 @@ router.get('/profile', verifyToken, async (req, res) => {
     res.json(userData);
   } catch (error) {
     res.status(500).send('Error fetching user profile');
+  }
+});
+
+// Register new user
+router.post('/users', async (req, res) => {
+  const db = getDb();
+  const usersCollection = db.collection('users');
+  const { name, pin, mobileNumber, email, role, status } = req.body;
+
+  try {
+    const existingUser = await usersCollection.findOne({ email });
+    if (existingUser) {
+      return res.status(400).send('User with this email already exists');
+    }
+
+    const newUser = {
+      name,
+      pin,
+      mobileNumber,
+      email,
+      role,
+      status,
+    };
+
+    await usersCollection.insertOne(newUser);
+    res.status(201).send('User registered successfully');
+  } catch (error) {
+    res.status(500).send('Error registering user');
   }
 });
 
